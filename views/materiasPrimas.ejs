@@ -1,0 +1,13 @@
+<h1>Materias Primas</h1>
+<ul>
+<% materiasPrimas.forEach(function(materiaPrima){ %>
+  <li><%= materiaPrima.type %><a type="button" href="/materia-prima/eliminar/<%= materiaPrima.type %>">Borrar</a></li>
+<% }) %>
+</ul>
+<h2>Nueva materia prima</h2>
+
+<form method="post" action="/materia-prima/nueva">
+  <label>Tipo</label>
+  <input type="text" name="mp_type">
+  <input type="submit" value="Aceptar">
+</form>
