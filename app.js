@@ -72,6 +72,22 @@ app.get('/materia-prima/eliminar/:mp', function(req, res){
     });
 });
 
+app.post('/materia-prima/actualizar/:mp', function(req, res){
+  var session = driver.session();
+  var oldParam = req.params.mp;
+  var newParam = req.body.mp_new_param;
+  session
+    .run('MATCH(newMP:MateriaPrima {type:{oldParam}}) SET newMP.type = {newParam}', {oldParam: oldParam, newParam: newParam})
+    .then(function(result){
+      session.close();
+      res.redirect('/materias-primas')
+    })
+    .catch(function(error){
+      session.close();
+      console.log(error);
+    });
+});
+
 
 // Renders recetas.ejs and passes a list of all recetas
 app.get('/recetas', function(req, res){
