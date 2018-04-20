@@ -1,6 +1,13 @@
 <h1>Recetas</h1>
-<ul>
+<table>
 <% recipies.forEach(function(receta){ %>
-  <li><%= receta.name %></li>
+  <tr>
+    <td><%= receta %></td>
+    <td>
+      <ul>
+        <li></li>
+      </ul>
+    </td>
+  </tr>
 <% }) %>
-</ul>
+</table>

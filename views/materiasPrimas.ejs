@@ -1,22 +1,27 @@
 <h1>Materias Primas</h1>
 <table>
   <tr>
-    <% materiasPrimas.forEach(function(materiaPrima){ %>
+    <th>Nombre</th>
+    <th>Actualizar</th>
+    <th>Borrar</th>
+  </tr>
+  <% materiasPrimas.forEach(function(materiaPrima){ %>
+  <tr>
       <td><%= materiaPrima.type %></td>
-      <td><a type="button" href="/materia-prima/eliminar/<%= materiaPrima.type %>">Borrar</a></td>
       <td>
         <form action="/materia-prima/actualizar/<%= materiaPrima.type %>" method="post">
           <input type="text" name="mp_new_param">
-          <input type="submit" value="Aceptar">
+          <input type="submit" value="Actualizar">
         </form>
       </td>
-      <% }) %>
+      <td><a type="button" href="/materia-prima/eliminar/<%= materiaPrima.type %>">Borrar</a></td>
   </tr>
+  <% }) %>
 </table>
 <h2>Nueva materia prima</h2>
 
 <form method="post" action="/materia-prima/nueva">
   <label>Tipo</label>
   <input type="text" name="mp_type">
-  <input type="submit" value="Aceptar">
+  <input type="submit" value="Crear">
 </form>

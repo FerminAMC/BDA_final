@@ -19,7 +19,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Connection to DB
 var driver = neo4j.driver('bolt://localhost', neo4j.auth.basic('neo4j', '40846382'));
 
-// Renders materiasPrimas.ejs and passes a list of all materias primas
+// Gets unique values of an array
+function onlyUnique(value, index, self) {
+    return self.indexOf(value) === index;
+}
+
+// MATERIAS PRIMAS
 app.get('/materias-primas', function(req, res){
   var session = driver.session();
   session
@@ -89,20 +94,26 @@ app.post('/materia-prima/actualizar/:mp', function(req, res){
 });
 
 
-// Renders recetas.ejs and passes a list of all recetas
+// RECETAS
 app.get('/recetas', function(req, res){
   var session = driver.session();
   session
-    .run('MATCH(cerealConLeche:Receta) RETURN cerealConLeche')
+    .run('MATCH(receta:Receta)-[l:Lleva]-(mp:MateriaPrima) RETURN receta, mp, l')
     .then(function(result){
       session.close();
       var recipieArr = [];
+      //console.log(result.records[1]._fields)
       result.records.forEach(function(record){
-        console.log(record._fields[1])
-        recipieArr.push({
-          name: record._fields[0].properties.name
-        });
+        console.log(record._fields)
+        console.log("-------------------------------------------------")
+        recipieArr.push(record._fields[0].properties.name);
       });
+      recipieArr = recipieArr.filter(onlyUnique);
+      result.records.forEach(function(record){
+        //console.log(record._fields[1].properties)
+        console.log(recipieArr[recipieArr.indexOf(record._fields[0].properties.name)])
+      });
+      //console.log(recipieArr)
       res.render('recetas', {
         recipies: recipieArr
       });
