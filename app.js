@@ -98,7 +98,7 @@ app.post('/materia-prima/actualizar/:mp', function(req, res){
 app.get('/recetas', function(req, res){
   var session = driver.session();
   session
-    .run('MATCH(receta:Receta)-[l:Lleva]-(mp:MateriaPrima) RETURN receta, mp, l')
+    .run('MATCH(receta:Receta) RETURN receta')
     .then(function(result){
       session.close();
       var recipieArr = [];
@@ -109,14 +109,107 @@ app.get('/recetas', function(req, res){
         recipieArr.push(record._fields[0].properties.name);
       });
       recipieArr = recipieArr.filter(onlyUnique);
-      result.records.forEach(function(record){
-        //console.log(record._fields[1].properties)
-        console.log(recipieArr[recipieArr.indexOf(record._fields[0].properties.name)])
-      });
-      //console.log(recipieArr)
       res.render('recetas', {
         recipies: recipieArr
       });
+    })
+    .catch(function(error){
+      session.close();
+      console.log(error);
+    });
+});
+
+app.post('/receta/nueva', function(req, res){
+  var name = req.body.r_name;
+  var session = driver.session();
+  session
+    .run('CREATE(r:Receta {name:{nameParam}})', {nameParam: name})
+    .then(function(result){
+      session.close();
+      res.redirect('/recetas')
+    })
+    .catch(function(error){
+      session.close();
+      console.log(error);
+    });
+});
+
+app.post('/ingrediente/nuevo/:r', function(req, res){
+  console.log(req.body.materiasPrimas)
+  var newMP = req.body.materiasPrimas;
+  var recetaParam = req.params.r;
+  var session = driver.session();
+  session
+    .run('MATCH(r:Receta {name:{recetaParam}}), (mp:MateriaPrima{type:{newMP}}) CREATE(r)-[:Lleva]->(mp)', {recetaParam: recetaParam, newMP: newMP})
+    .then(function(result){
+      session.close();
+      res.redirect('/receta/' + recetaParam + '/ingredientes')
+    })
+    .catch(function(error){
+      session.close();
+      console.log(error);
+    });
+});
+
+app.get('/receta/:r/ingredientes', function(req, res){
+  var session = driver.session();
+  var recetaParam = req.params.r;
+  var mpArr = [];
+  session
+    .run('MATCH(m:MateriaPrima) RETURN m')
+    .then(function(result){
+      result.records.forEach(function(record){
+        mpArr.push(record._fields[0].properties.type);
+      });
+    })
+    .catch(function(error){
+      session.close();
+      console.log(error);
+    });
+  session
+    .run('MATCH(:Receta{name:{recetaParam}})-[:Lleva]-(m:MateriaPrima) RETURN m', {recetaParam: recetaParam})
+    .then(function(result){
+      session.close();
+      var ingredientesArr = [];
+      result.records.forEach(function(record){
+        ingredientesArr.push(record._fields[0].properties.type);
+      });
+      res.render('ingredientes', {
+        receta: recetaParam,
+        ingredientes: ingredientesArr,
+        materiasPrimas: mpArr
+      });
+    })
+    .catch(function(error){
+      session.close();
+      console.log(error);
+    });
+});
+
+app.get('/receta/eliminar-receta/:r', function(req, res){
+  var session = driver.session();
+  var deleteParam = req.params.r;
+  session
+    .run('MATCH(r:Receta {name:{deleteParam}}) DETACH DELETE r', {deleteParam: deleteParam})
+    .then(function(result){
+      session.close();
+      res.redirect('/recetas')
+    })
+    .catch(function(error){
+      session.close();
+      console.log(error);
+    });
+});
+
+app.get('/receta/eliminar-ingrediente/:r/:i', function(req, res){
+  var session = driver.session();
+  var recetaParam = req.params.r;
+  var ingredienteParam = req.params.i;
+  session
+    .run('MATCH(r:Receta {name:{recetaParam}})-[l:Lleva]-(mp:MateriaPrima{type:{ingredienteParam}}) DELETE l', {recetaParam: recetaParam, ingredienteParam: ingredienteParam})
+    .then(function(result){
+      session.close();
+      res.redirect('/receta/' + recetaParam + '/ingredientes')
     })
     .catch(function(error){
       session.close();

@@ -2,12 +2,15 @@
 <table>
 <% recipies.forEach(function(receta){ %>
   <tr>
-    <td><%= receta %></td>
-    <td>
-      <ul>
-        <li></li>
-      </ul>
-    </td>
+    <td><a type="button" href="/receta/<%= receta %>/ingredientes"><%= receta %></a></td>
+    <td><a type="button" href="/receta/eliminar-receta/<%= receta %>">Borrar</a></td>
   </tr>
 <% }) %>
 </table>
+<h2>Nueva receta</h2>
+
+<form method="post" action="/receta/nueva">
+  <label>Nombre</label>
+  <input type="text" name="r_name">
+  <input type="submit" value="Crear">
+</form>
