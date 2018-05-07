@@ -99,6 +99,34 @@ app.get('/:mp/reservas', function(req, res){
   var materiaPrima = req.params.mp;
   var session = driver.session();
   session
+    .run('MATCH(mp:MateriaPrima{type:{materiaPrima}})-[]-(r:Reserva) WHERE toInt(r.cantidad)<1 DETACH DELETE r', {materiaPrima: materiaPrima})
+    .then(function(result){
+      session
+        .run('MATCH(mp:MateriaPrima{type:{materiaPrima}})-[]-(r:Reserva) RETURN r', {materiaPrima: materiaPrima})
+        .then(function(result){
+          session.close();
+          var reservasArr = [];
+          result.records.forEach(function(record){
+            reservasArr.push({
+              cantidad: record._fields[0].properties.cantidad,
+              fecha_expiracion: record._fields[0].properties.fecha_expiracion
+            });
+          });
+          res.render('reservas', {
+            materiaPrima: materiaPrima,
+            reservas: reservasArr
+          });
+        })
+        .catch(function(error){
+          session.close();
+          console.log(error);
+        });
+    })
+    .catch(function(error){
+      session.close();
+      console.log(error);
+    });
+  session
     .run('MATCH(mp:MateriaPrima{type:{materiaPrima}})-[]-(r:Reserva) RETURN r', {materiaPrima: materiaPrima})
     .then(function(result){
       session.close();
@@ -108,10 +136,6 @@ app.get('/:mp/reservas', function(req, res){
           cantidad: record._fields[0].properties.cantidad,
           fecha_expiracion: record._fields[0].properties.fecha_expiracion
         });
-      });
-      res.render('reservas', {
-        materiaPrima: materiaPrima,
-        reservas: reservasArr
       });
     })
     .catch(function(error){
@@ -289,13 +313,13 @@ app.get('/receta/eliminar-ingrediente/:r/:i', function(req, res){
       console.log(error);
     });
 });
-// FIX THIS
+
 app.get('/receta/preparar/:r', function(req, res){
   var session = driver.session();
   var recetaParam = req.params.r;
   var mpArr = []
   session
-    .run('MATCH (r:Receta{name:{recetaParam}})-[]-(mp:MateriaPrima)RETURN mp', {recetaParam: recetaParam})
+    .run('MATCH (r:Receta{name:{recetaParam}})-[]-(mp:MateriaPrima) RETURN mp', {recetaParam: recetaParam})
     .then(function(result){
       result.records.forEach(function(record){
         mpArr.push(record._fields[0].properties.type);
@@ -304,9 +328,9 @@ app.get('/receta/preparar/:r', function(req, res){
         session
           .run('MATCH(mp:MateriaPrima{type:{mp}})-[]-(x) WITH x ORDER BY x.fecha_expiracion LIMIT 1 SET x.cantidad=toString(toInt(x.cantidad)-1)', {mp: mp})
           .then(function(result){
-            result.records.forEach(function(record){
-              console.log(record._fields[0].properties);
-            });
+            if(result.summary.updateStatistics._stats.propertiesSet == 0){
+              console.log("No hay suficientes ingredientes");
+            }
           })
           .catch(function(error){
             session.close();
