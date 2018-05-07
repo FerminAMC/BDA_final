@@ -1,8 +1,22 @@
+<a type="button" href="/materias-primas">Materias Primas</a>
 <h1>Recetas</h1>
 <table>
+  <tr>
+    <th>Nombre</th>
+    <th>Actualizar</th>
+    <th>Preparar</th>
+    <th>Borrar</th>
+  </tr>
 <% recipies.forEach(function(receta){ %>
   <tr>
     <td><a type="button" href="/receta/<%= receta %>/ingredientes"><%= receta %></a></td>
+    <td>
+      <form action="/receta/actualizar/<%= receta %>" method="post">
+        <input type="text" name="r_new_param">
+        <input type="submit" value="Actualizar">
+      </form>
+    </td>
+    <td><a type="button" href="/receta/preparar/<%= receta %>">Preparar</a></td>
     <td><a type="button" href="/receta/eliminar-receta/<%= receta %>">Borrar</a></td>
   </tr>
 <% }) %>
@@ -12,5 +26,5 @@
 <form method="post" action="/receta/nueva">
   <label>Nombre</label>
   <input type="text" name="r_name">
-  <input type="submit" value="Crear">
+  <input type="submit" value="Agregar">
 </form>

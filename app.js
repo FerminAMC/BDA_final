@@ -66,7 +66,7 @@ app.get('/materia-prima/eliminar/:mp', function(req, res){
   var session = driver.session();
   var deleteParam = req.params.mp;
   session
-    .run('MATCH(mp:MateriaPrima {type:{deleteParam}}) DELETE mp', {deleteParam: deleteParam})
+    .run('MATCH(mp:MateriaPrima {type:{deleteParam}})-[]-(x) DELETE mp, x', {deleteParam: deleteParam})
     .then(function(result){
       session.close();
       res.redirect('/materias-primas')
@@ -93,6 +93,66 @@ app.post('/materia-prima/actualizar/:mp', function(req, res){
     });
 });
 
+// RESERVAS
+
+app.get('/:mp/reservas', function(req, res){
+  var materiaPrima = req.params.mp;
+  var session = driver.session();
+  session
+    .run('MATCH(mp:MateriaPrima{type:{materiaPrima}})-[]-(r:Reserva) RETURN r', {materiaPrima: materiaPrima})
+    .then(function(result){
+      session.close();
+      var reservasArr = [];
+      result.records.forEach(function(record){
+        reservasArr.push({
+          cantidad: record._fields[0].properties.cantidad,
+          fecha_expiracion: record._fields[0].properties.fecha_expiracion
+        });
+      });
+      res.render('reservas', {
+        materiaPrima: materiaPrima,
+        reservas: reservasArr
+      });
+    })
+    .catch(function(error){
+      session.close();
+      console.log(error);
+    });
+});
+
+app.post('/:mp/reserva/nueva', function(req, res){
+  var materiaPrima = req.params.mp;
+  var cantidad = req.body.cantidad;
+  var fecha_expiracion = req.body.fecha_expiracion;
+  var session = driver.session();
+  session
+    .run('MATCH(mp:MateriaPrima{type:{materiaPrima}}) CREATE(mp)-[:Tiene]->(reserva:Reserva{cantidad:{cantidad}, fecha_expiracion:{fecha_expiracion}})', {materiaPrima: materiaPrima, cantidad: cantidad, fecha_expiracion: fecha_expiracion})
+    .then(function(result){
+      session.close();
+      res.redirect('/' + materiaPrima + '/reservas')
+    })
+    .catch(function(error){
+      session.close();
+      console.log(error);
+    });
+});
+
+app.get('/:mp/reserva/eliminar/:cantidad/:fecha', function(req, res){
+  var session = driver.session();
+  var materiaPrima = req.params.mp;
+  var deleteCantidad = req.params.cantidad;
+  var deleteFecha = req.params.fecha;
+  session
+    .run('MATCH(mp:MateriaPrima {type:{materiaPrima}})-[]-(r:Reserva {cantidad:{deleteCantidad}, fecha_expiracion:{deleteFecha}})DETACH DELETE r', {materiaPrima: materiaPrima, deleteCantidad: deleteCantidad, deleteFecha: deleteFecha})
+    .then(function(result){
+      session.close();
+      res.redirect('/' + materiaPrima + '/reservas')
+    })
+    .catch(function(error){
+      session.close();
+      console.log(error);
+    });
+});
 
 // RECETAS
 app.get('/recetas', function(req, res){
@@ -102,10 +162,7 @@ app.get('/recetas', function(req, res){
     .then(function(result){
       session.close();
       var recipieArr = [];
-      //console.log(result.records[1]._fields)
       result.records.forEach(function(record){
-        console.log(record._fields)
-        console.log("-------------------------------------------------")
         recipieArr.push(record._fields[0].properties.name);
       });
       recipieArr = recipieArr.filter(onlyUnique);
@@ -124,6 +181,22 @@ app.post('/receta/nueva', function(req, res){
   var session = driver.session();
   session
     .run('CREATE(r:Receta {name:{nameParam}})', {nameParam: name})
+    .then(function(result){
+      session.close();
+      res.redirect('/recetas')
+    })
+    .catch(function(error){
+      session.close();
+      console.log(error);
+    });
+});
+
+app.post('/receta/actualizar/:r', function(req, res){
+  var session = driver.session();
+  var oldParam = req.params.r;
+  var newParam = req.body.r_new_param;
+  session
+    .run('MATCH(newR:Receta {name:{oldParam}}) SET newR.name = {newParam}', {oldParam: oldParam, newParam: newParam})
     .then(function(result){
       session.close();
       res.redirect('/recetas')
@@ -210,6 +283,37 @@ app.get('/receta/eliminar-ingrediente/:r/:i', function(req, res){
     .then(function(result){
       session.close();
       res.redirect('/receta/' + recetaParam + '/ingredientes')
+    })
+    .catch(function(error){
+      session.close();
+      console.log(error);
+    });
+});
+// FIX THIS
+app.get('/receta/preparar/:r', function(req, res){
+  var session = driver.session();
+  var recetaParam = req.params.r;
+  var mpArr = []
+  session
+    .run('MATCH (r:Receta{name:{recetaParam}})-[]-(mp:MateriaPrima)RETURN mp', {recetaParam: recetaParam})
+    .then(function(result){
+      result.records.forEach(function(record){
+        mpArr.push(record._fields[0].properties.type);
+      });
+      mpArr.forEach(function(mp){
+        session
+          .run('MATCH(mp:MateriaPrima{type:{mp}})-[]-(x) WITH x ORDER BY x.fecha_expiracion LIMIT 1 SET x.cantidad=toString(toInt(x.cantidad)-1)', {mp: mp})
+          .then(function(result){
+            result.records.forEach(function(record){
+              console.log(record._fields[0].properties);
+            });
+          })
+          .catch(function(error){
+            session.close();
+            console.log(error);
+          });
+      });
+      res.redirect('/recetas')
     })
     .catch(function(error){
       session.close();

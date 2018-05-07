@@ -1,0 +1,26 @@
+<a type="button" href="/materias-primas">Regresar</a>
+<h1><%= materiaPrima %></h1>
+<table>
+  <tr>
+    <th>Cantidad</th>
+    <th>Fecha de Vencimiento</th>
+    <th>Borrar</th>
+  </tr>
+<% reservas.forEach(function(reserva){ %>
+  <tr>
+    <td><%= reserva.cantidad %></td>
+    <td><%= reserva.fecha_expiracion %></td>
+    <td><a type="button" href="/<%= materiaPrima %>/reserva/eliminar/<%= reserva.cantidad %>/<%= reserva.fecha_expiracion %>">Borrar</a></td>
+  </tr>
+<% }) %>
+</table>
+
+<h2>Nueva reserva</h2>
+
+<form method="post" action="/<%= materiaPrima %>/reserva/nueva">
+  <label>Cantidad</label>
+  <input type="number" name="cantidad">
+  <label>Fecha de vencimiento</label>
+  <input type="date" name="fecha_expiracion">
+  <input type="submit" value="Agregar">
+</form>
