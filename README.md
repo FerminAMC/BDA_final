@@ -22,6 +22,10 @@ Dentro del directorio del proyecto
 npn install (en caso de falla correr con sudo)
 node app
 ```
+En el buscador
+```
+http://localhost:3000/materias-primas
+```
 
 ## Hecho con
 
