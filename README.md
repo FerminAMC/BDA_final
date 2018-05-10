@@ -35,6 +35,7 @@ http://localhost:3000/materias-primas
 
 ## Autores
 * **Fermín Moreno** - *Trabajo Inicial* - [FerminAMC](https://github.com/FerminAMC)
+* **Isaias Marvi** - *Trabajo Inicial* - [IMARVI](https://github.com/IMARVI)
 
 ## Reconocimientos
 
